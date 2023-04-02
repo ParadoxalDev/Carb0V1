@@ -2,39 +2,47 @@
 
 pragma solidity ^0.8.9;
 
+import "hardhat/console.sol";
 import "./Project.sol";
 
 contract Carb0 {
     uint128 public numberOfProjects;
 
-    address[] public projects;
-    address[] public ownerOfProjects;
-
+    // Structure to represent a project and its owner
     struct ProjectOwner {
-        uint project;
+        uint idProject;
         address owner;
+        address project;
     }
 
+    // Array to store project owners
     ProjectOwner[] public projectOwners;
 
-    mapping(address => uint) owners;
-
+    // Constant to represent the cost of creating a new project
     uint128 public constant PROJECT_CREATION_COST = 0.1 ether;
 
-    event ProjectCreated(address projectAddress);
+    // Event to be emitted when a new project is created
+    event ProjectCreated(address projectAddress, address owner, uint id);
 
-    Project public newProject;
+    Project newProject;
 
+    /// @notice Create a new project with the sender as the owner
+    /// @dev Requires the sender to send at least PROJECT_CREATION_COST in ETH
     function createProject() public payable {
+        // Verify that enough ETH was sent
         require(msg.value >= PROJECT_CREATION_COST, "Not enough ETH sent");
+        // Create a new project with the sender as the owner
         newProject = new Project(msg.sender);
-        projects.push(address(newProject));
-        uint id = numberOfProjects + 1;
-        projectOwners.push(ProjectOwner(id, msg.sender));
+        // Push the new project to the projectOwners array
+        projectOwners.push(
+            ProjectOwner(numberOfProjects, msg.sender, address(newProject))
+        );
+        // Increment the number of projects
         numberOfProjects++;
-        emit ProjectCreated(address(newProject));
+        // Emit the ProjectCreated event
+        emit ProjectCreated(address(newProject), msg.sender, numberOfProjects);
 
-        require(msg.value >= PROJECT_CREATION_COST, "Not enough ETH sent");
+        // If the sender sent more than PROJECT_CREATION_COST, refund the excess
         if (msg.value > PROJECT_CREATION_COST) {
             uint256 excessAmount = msg.value - PROJECT_CREATION_COST;
             (bool success, ) = msg.sender.call{value: excessAmount}("");
@@ -42,8 +50,24 @@ contract Carb0 {
         }
     }
 
-    function getMyProjects() public view returns (ProjectOwner memory _owned) {
-        uint id = owners[msg.sender];
-        _owned = projectOwners[id];
+    /// @notice Get the IDs of all projects owned by the sender
+    /// @return An array of project IDs owned by the sender
+    function idOfMyProjects() public view returns (uint[] memory) {
+        uint[] memory index = new uint[](projectOwners.length);
+        uint count = 0;
+        // Loop through projectOwners to find projects owned by the sender
+        for (uint i = 0; i < projectOwners.length; i++) {
+            if (projectOwners[i].owner == msg.sender) {
+                index[count] = i;
+                count++;
+            }
+        }
+        // Create a new array to store the project IDs owned by the sender
+        uint[] memory result = new uint[](count);
+        for (uint i = 0; i < count; i++) {
+            result[i] = index[i];
+        }
+        // Return the array of project IDs owned by the sender
+        return result;
     }
 }
