@@ -48,12 +48,11 @@ describe("Carb0", function () {
       );
 
       const newProjectAddress = projectCreatedEvent.args.projectAddress;
-      const projectId = projectCreatedEvent.args.id;
 
       expect(projectCreatedEvent.args.owner).to.equal(owner.address);
 
       const projectOwner = await carb0.projectOwners(0);
-      expect(projectOwner.idProject).to.equal(0); // Expect the correct project ID here
+      expect(projectOwner.idProject).to.equal(0);
       expect(projectOwner.owner).to.equal(owner.address);
 
       project = await Project.attach(newProjectAddress);
