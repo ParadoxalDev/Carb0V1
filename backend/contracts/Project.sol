@@ -10,6 +10,7 @@ import "hardhat/console.sol";
 contract Project {
     address private owner;
     address public architect;
+    uint public numberOfPhases;
 
     //uint id;
     string projectName;
@@ -49,7 +50,7 @@ contract Project {
         string unit;
         uint UF;
         string unitUF;
-        int totalLcConstruction;
+        uint totalLcConstruction;
         bool approveByTheArchi;
     }
 
@@ -57,8 +58,20 @@ contract Project {
     event PhaseCreated(string phaseName, string phaseType);
     event MaterialCreated(uint id, string name, string description);
     event MaterialAddToPhase(uint materialId, uint phaseId);
+    event MaterialCreatedDetailed(
+        uint id,
+        string name,
+        string description,
+        string companyBrand,
+        string utilisationType,
+        uint transportA4,
+        string unit,
+        uint UF,
+        string unitUF,
+        uint totalLcConstruction
+    );
 
-    Phase[] public phases;
+    Phase[] phases;
     Material[] public materials;
 
     /// @notice Constructor to set the owner of the project
@@ -126,11 +139,34 @@ contract Project {
             phase.phaseName = "genesis";
             phase.phaseType = "genesis";
             phase.materialIndices = new uint[](0);
+            phase.carbonOfPhase = 0;
             phases.push(phase);
+            numberOfPhases++;
         }
         // Add the new phase to the phases array
-        phases.push(Phase(_name, _phaseType, new uint[](0), 0));
+        uint[] memory emptyArray = new uint[](0);
+        phases.push(Phase(_name, _phaseType, emptyArray, 0));
+        numberOfPhases++;
         emit PhaseCreated(_name, _phaseType);
+    }
+
+    ///@notice Retrieves the information of a project phase using its ID.
+    ///@param _idPhase The ID of the project phase.
+    ///@return phaseName The name of the phase.
+    ///@return phaseType The type of the phase.
+    ///@return materialIndices An array containing the indices of materials associated with this phase.
+    ///@return carbonOfPhase The carbon score for this phase.
+    function getPhase(
+        uint _idPhase
+    ) public view returns (string memory, string memory, uint[] memory, uint) {
+        require(_idPhase < phases.length, "Phase does not exist");
+        Phase memory phase = phases[_idPhase];
+        return (
+            phase.phaseName,
+            phase.phaseType,
+            phase.materialIndices,
+            phase.carbonOfPhase
+        );
     }
 
     /// @notice Create a new material for the project
@@ -144,8 +180,25 @@ contract Project {
         string memory _c,
         string memory _d
     ) public {
-        materials.push(Material(0, _a, _b, _c, _d, 0, _a, 0, _a, 1, false));
+        uint lengthArray = materials.length;
+        materials.push(
+            Material(lengthArray, _a, _b, _c, _d, 5, _a, 0, _a, 10, false)
+        );
         emit MaterialCreated(materials.length - 1, _a, _b);
+
+        Material memory material = materials[materials.length - 1];
+        emit MaterialCreatedDetailed(
+            material.id,
+            material.name,
+            material.description,
+            material.companyBrand,
+            material.utilisationType,
+            material.transportA4,
+            material.unit,
+            material.UF,
+            material.unitUF,
+            material.totalLcConstruction
+        );
     }
 
     /// @notice Add a material to a specific phase of the project
@@ -155,13 +208,14 @@ contract Project {
         uint _idMaterial,
         uint _idPhase
     ) public onlyArchi {
-        uint numberOfPhases = phases.length;
-        uint numberOfMaterials = materials.length;
         // Check if the phase and material exist
-        require(_idPhase < numberOfPhases, "this phase doesn't exist");
-        require(_idMaterial < numberOfMaterials, "this material doesn't exist");
+        require(_idPhase < phases.length, "this phase doesn't exist");
+        require(_idMaterial < materials.length, "this material doesn't exist");
         // Add the material ID to the phase's materialIndices array
         phases[_idPhase].materialIndices.push(_idMaterial);
+        // Check the amount carbon of the material and add to the total of phase
+        uint value = materials[_idMaterial].totalLcConstruction;
+        phases[_idPhase].carbonOfPhase += value;
         emit MaterialAddToPhase(_idMaterial, _idPhase);
     }
 }

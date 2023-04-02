@@ -5,6 +5,8 @@ pragma solidity ^0.8.9;
 import "hardhat/console.sol";
 import "./Project.sol";
 
+///@title Carb0 - A contract to create and manage worksite projects for track the c02
+
 contract Carb0 {
     uint128 public numberOfProjects;
 
