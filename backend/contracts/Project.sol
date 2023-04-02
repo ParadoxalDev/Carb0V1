@@ -23,7 +23,7 @@ contract Project {
     uint256 scoringCarbon;
 
     // Structure to represent a project participant
-    struct Intervenant {
+    struct Worker {
         address account;
         string companyName;
         string companyAddresse;
@@ -70,9 +70,11 @@ contract Project {
         string unitUF,
         uint totalLcConstruction
     );
+    event WorkerAdded(address account, string companyName, uint siretNumber);
 
     Phase[] phases;
     Material[] public materials;
+    Worker[] public workers;
 
     /// @notice Constructor to set the owner of the project
     /// @param _owner The address of the project owner
@@ -89,6 +91,11 @@ contract Project {
     /// @notice Modifier to restrict access to only the architect of the project
     modifier onlyArchi() {
         require(msg.sender == architect, "Caller is not the architect");
+        _;
+    }
+    /// @notice Modifier to restrict access to only the architect of the project
+    modifier onlyWorker() {
+        require(verifyWorker(), "Caller is not a official worker");
         _;
     }
 
@@ -230,7 +237,7 @@ contract Project {
     function addMaterialToPhase(
         uint _idMaterial,
         uint _idPhase
-    ) public onlyArchi {
+    ) public onlyWorker {
         // Check if the phase and material exist
         require(_idPhase < phases.length, "this phase doesn't exist");
         require(_idMaterial < materials.length, "this material doesn't exist");
@@ -240,5 +247,35 @@ contract Project {
         uint value = materials[_idMaterial].totalLcConstruction;
         phases[_idPhase].carbonOfPhase += value;
         emit MaterialAddToPhase(_idMaterial, _idPhase);
+    }
+
+    function addWorker(
+        address _account,
+        string memory _companyName,
+        string memory _companyAddresse,
+        uint _siretNumber
+    ) public onlyArchi {
+        Worker memory worker;
+        worker.account = _account;
+        worker.companyName = _companyName;
+        worker.companyAddresse = _companyAddresse;
+        worker.siretNumber = _siretNumber;
+        worker.isApprovedByTheOwner = false;
+        workers.push(worker);
+        emit WorkerAdded(_account, _companyName, _siretNumber);
+    }
+
+    function approvedByTheOwner(uint8 _id) external onlyOwner {
+        require(!workers[_id].isApprovedByTheOwner, "Already approved by you");
+        workers[_id].isApprovedByTheOwner = true;
+    }
+
+    function verifyWorker() public view returns (bool) {
+        for (uint i = 0; i < workers.length; i++) {
+            if (msg.sender == workers[i].account) {
+                return true;
+            }
+        }
+        return false;
     }
 }
