@@ -8,7 +8,7 @@ import "hardhat/console.sol";
 
 ///@title Project - A contract to manage construction project details
 contract Project {
-    address private owner;
+    address public owner;
     address public architect;
     uint public numberOfPhases;
 
@@ -116,7 +116,6 @@ contract Project {
         uint _startDate,
         uint _endDate
     ) public onlyArchi {
-        require(msg.sender == owner, "Caller is not owner");
         projectName = _projectName;
         typeOfProject = _typeOfProject;
         addresseOfProject = _addresseOfProject;
@@ -124,6 +123,30 @@ contract Project {
         projectValue = _projectValue;
         startDate = _startDate;
         endDate = _endDate;
+    }
+
+    function getProjectDetails()
+        public
+        view
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            uint128,
+            uint256,
+            uint,
+            uint
+        )
+    {
+        return (
+            projectName,
+            typeOfProject,
+            addresseOfProject,
+            surfaceSquareMeter,
+            projectValue,
+            startDate,
+            endDate
+        );
     }
 
     /// @notice Create a new phase for the project
