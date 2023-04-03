@@ -249,6 +249,12 @@ contract Project {
         emit MaterialAddToPhase(_idMaterial, _idPhase);
     }
 
+    ///@notice Add a worker to the list of workers
+    ///@param _account The Ethereum address of the worker
+    ///@param _companyName The name of the worker's company
+    ///@param _companyAddresse The address of the worker's company
+    ///@param _siretNumber The SIRET number of the worker's company
+
     function addWorker(
         address _account,
         string memory _companyName,
@@ -265,11 +271,16 @@ contract Project {
         emit WorkerAdded(_account, _companyName, _siretNumber);
     }
 
+    ///@notice Approve a worker by the owner
+    ///@param _id The ID of the worker to be approved
+
     function approvedByTheOwner(uint8 _id) external onlyOwner {
         require(!workers[_id].isApprovedByTheOwner, "Already approved by you");
         workers[_id].isApprovedByTheOwner = true;
     }
 
+    ///@notice Check if the sender is a worker approved by the owner
+    ///@return true if the sender is an approved worker, false otherwise
     function verifyApprovedByTheOwner() public view returns (bool) {
         for (uint i = 0; i < workers.length; i++) {
             if (msg.sender == workers[i].account) {
@@ -281,6 +292,8 @@ contract Project {
         return false;
     }
 
+    ///@notice Check if the sender is a worker in the list of workers
+    ///@return true if the sender is a worker, false otherwise
     function verifyWorker() public view returns (bool) {
         for (uint i = 0; i < workers.length; i++) {
             if (msg.sender == workers[i].account) {
