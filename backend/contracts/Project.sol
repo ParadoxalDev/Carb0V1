@@ -335,7 +335,10 @@ contract Project {
         return false;
     }
 
-    ///@notice
+    ///@notice create a new supplier
+    ///@param _account The Ethereum address of the worker
+    ///@param _companyName The name of the worker's company
+    ///@param _companyAddress The address of the worker's company
     function createSupplier(
         address _account,
         string memory _companyName,
