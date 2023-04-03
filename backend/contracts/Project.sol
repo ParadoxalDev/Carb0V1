@@ -270,6 +270,17 @@ contract Project {
         workers[_id].isApprovedByTheOwner = true;
     }
 
+    function verifyApprovedByTheOwner() public view returns (bool) {
+        for (uint i = 0; i < workers.length; i++) {
+            if (msg.sender == workers[i].account) {
+                if (workers[i].isApprovedByTheOwner) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     function verifyWorker() public view returns (bool) {
         for (uint i = 0; i < workers.length; i++) {
             if (msg.sender == workers[i].account) {
