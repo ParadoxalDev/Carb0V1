@@ -11,6 +11,7 @@ contract Project {
     address public owner;
     address public architect;
     uint public numberOfPhases;
+    uint256 private _documentIdCounter;
 
     //uint id;
     string projectName;
@@ -20,7 +21,7 @@ contract Project {
     uint256 projectValue;
     uint startDate;
     uint endDate;
-    uint256 scoringCarbon;
+    uint16 scoringCarbon;
 
     // Structure to represent a project participant
     struct Worker {
@@ -29,6 +30,7 @@ contract Project {
         string companyAddresse;
         uint siretNumber;
         bool isApprovedByTheOwner;
+        bool banned;
     }
 
     // Structure to represent a project phase
@@ -37,6 +39,13 @@ contract Project {
         string phaseType;
         uint[] materialIndices;
         uint carbonOfPhase;
+    }
+    // Structure to represent a supplier
+    struct Supplier {
+        address account;
+        string companyName;
+        string companyAddress;
+        uint8 siretNumber;
     }
 
     // Structure to represent a material used in the project
@@ -52,6 +61,8 @@ contract Project {
         string unitUF;
         uint totalLcConstruction;
         bool approveByTheArchi;
+        bool proofUploadedByTheSupplier;
+        uint16 documentId;
     }
 
     event ArchitectSeted(address architect);
@@ -71,10 +82,15 @@ contract Project {
         uint totalLcConstruction
     );
     event WorkerAdded(address account, string companyName, uint siretNumber);
+    event ApprovedByTheOwner(address account, string companyName);
 
-    Phase[] phases;
-    Material[] public materials;
     Worker[] public workers;
+    Phase[] phases;
+    Supplier[] public suppliers;
+    Material[] public materials;
+
+    mapping(address => Supplier) public suppliersMap;
+    mapping(uint256 => string) private _documentURIs;
 
     /// @notice Constructor to set the owner of the project
     /// @param _owner The address of the project owner
@@ -212,7 +228,21 @@ contract Project {
     ) public {
         uint lengthArray = materials.length;
         materials.push(
-            Material(lengthArray, _a, _b, _c, _d, 5, _a, 0, _a, 10, false)
+            Material(
+                lengthArray,
+                _a,
+                _b,
+                _c,
+                _d,
+                5,
+                _a,
+                0,
+                _a,
+                10,
+                false,
+                false,
+                0
+            )
         );
         emit MaterialCreated(materials.length - 1, _a, _b);
 
@@ -267,6 +297,7 @@ contract Project {
         worker.companyAddresse = _companyAddresse;
         worker.siretNumber = _siretNumber;
         worker.isApprovedByTheOwner = false;
+        worker.banned = false;
         workers.push(worker);
         emit WorkerAdded(_account, _companyName, _siretNumber);
     }
@@ -277,6 +308,7 @@ contract Project {
     function approvedByTheOwner(uint8 _id) external onlyOwner {
         require(!workers[_id].isApprovedByTheOwner, "Already approved by you");
         workers[_id].isApprovedByTheOwner = true;
+        emit ApprovedByTheOwner(workers[_id].account, workers[_id].companyName);
     }
 
     ///@notice Check if the sender is a worker approved by the owner
@@ -301,5 +333,72 @@ contract Project {
             }
         }
         return false;
+    }
+
+    ///@notice
+    function createSupplier(
+        address _account,
+        string memory _companyName,
+        string memory _companyAddress,
+        uint8 _siretNumber
+    ) public onlyWorker {
+        require(
+            suppliersMap[_account].account == address(0),
+            "Supplier already exists"
+        );
+        suppliersMap[_account] = Supplier({
+            account: _account,
+            companyName: _companyName,
+            companyAddress: _companyAddress,
+            siretNumber: _siretNumber
+        });
+    }
+
+    function updateSupplier(
+        address _account,
+        string memory _companyName,
+        string memory _companyAddress,
+        uint8 _siretNumber
+    ) public onlyWorker {
+        Supplier storage supplier = suppliersMap[_account];
+        supplier.companyName = _companyName;
+        supplier.companyAddress = _companyAddress;
+        supplier.siretNumber = _siretNumber;
+    }
+
+    ///@notice add the URI in the contract gived with the upload of document
+    ///@param _documentURI the document URI
+
+    function createDocument(string memory _documentURI) public {
+        require(suppliersMap[msg.sender].account != address(0));
+        uint256 documentId = _documentIdCounter;
+        _documentURIs[documentId] = _documentURI;
+        _documentIdCounter++;
+    }
+
+    ///@notice retrieve the URI of one document whith is id
+    ///@return documentURI
+    function getDocumentURI(
+        uint256 _documentId
+    ) public view returns (string memory) {
+        return _documentURIs[_documentId];
+    }
+
+    function linkDocumentToMaterial(
+        uint _materialId,
+        uint16 _documentId
+    ) public {
+        require(_materialId < materials.length, "Material does not exist");
+        require(
+            suppliersMap[msg.sender].account != address(0),
+            "Only suppliers can link documents"
+        );
+        require(
+            bytes(_documentURIs[_documentId]).length > 0,
+            "Document does not exist"
+        );
+
+        materials[_materialId].proofUploadedByTheSupplier = true;
+        materials[_materialId].documentId = _documentId;
     }
 }
