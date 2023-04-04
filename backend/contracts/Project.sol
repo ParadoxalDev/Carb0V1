@@ -11,13 +11,13 @@ contract Project {
     address public owner;
     address public architect;
     uint public numberOfPhases;
-    uint256 private _documentIdCounter;
+    uint16 private documentIdCounter;
 
     //uint id;
     string projectName;
     string typeOfProject;
     string addresseOfProject;
-    uint128 surfaceSquareMeter;
+    uint32 surfaceSquareMeter;
     uint256 projectValue;
     uint startDate;
     uint endDate;
@@ -59,10 +59,11 @@ contract Project {
         string unit;
         uint UF;
         string unitUF;
-        uint totalLcConstruction;
+        uint16 totalLcConstruction;
         bool approveByTheArchi;
         bool proofUploadedByTheSupplier;
         uint16 documentId;
+        uint16 quantity;
     }
 
     event ArchitectSeted(address architect);
@@ -90,7 +91,7 @@ contract Project {
     Material[] public materials;
 
     mapping(address => Supplier) public suppliersMap;
-    mapping(uint256 => string) private _documentURIs;
+    mapping(uint32 => string) private _documentURIs;
 
     /// @notice Constructor to set the owner of the project
     /// @param _owner The address of the project owner
@@ -134,7 +135,7 @@ contract Project {
         string memory _projectName,
         string memory _typeOfProject,
         string memory _addresseOfProject,
-        uint128 _surfaceSquareMeter,
+        uint32 _surfaceSquareMeter,
         uint256 _projectValue,
         uint _startDate,
         uint _endDate
@@ -241,6 +242,7 @@ contract Project {
                 10,
                 false,
                 false,
+                0,
                 0
             )
         );
@@ -265,7 +267,7 @@ contract Project {
     /// @param _idMaterial The ID of the material to add
     /// @param _idPhase The ID of the phase to add the material to
     function addMaterialToPhase(
-        uint _idMaterial,
+        uint16 _idMaterial,
         uint _idPhase
     ) public onlyWorker {
         // Check if the phase and material exist
@@ -274,7 +276,7 @@ contract Project {
         // Add the material ID to the phase's materialIndices array
         phases[_idPhase].materialIndices.push(_idMaterial);
         // Check the amount carbon of the material and add to the total of phase
-        uint value = materials[_idMaterial].totalLcConstruction;
+        uint32 value = calculatesTotalCarbon(_idMaterial);
         phases[_idPhase].carbonOfPhase += value;
         emit MaterialAddToPhase(_idMaterial, _idPhase);
     }
@@ -372,25 +374,28 @@ contract Project {
     ///@notice add the URI in the contract gived with the upload of document
     ///@param _documentURI the document URI
 
-    function createDocument(string memory _documentURI) public {
+    function createDocument(
+        string memory _documentURI,
+        uint16 _materialId
+    ) public {
         require(suppliersMap[msg.sender].account != address(0));
-        uint256 documentId = _documentIdCounter;
-        _documentURIs[documentId] = _documentURI;
-        _documentIdCounter++;
+        _documentURIs[documentIdCounter] = _documentURI;
+        linkDocumentToMaterial(_materialId, documentIdCounter);
+        documentIdCounter++;
     }
 
     ///@notice retrieve the URI of one document whith is id
     ///@return documentURI
     function getDocumentURI(
-        uint256 _documentId
+        uint32 _documentId
     ) public view returns (string memory) {
         return _documentURIs[_documentId];
     }
 
     function linkDocumentToMaterial(
-        uint _materialId,
+        uint16 _materialId,
         uint16 _documentId
-    ) public {
+    ) private {
         require(_materialId < materials.length, "Material does not exist");
         require(
             suppliersMap[msg.sender].account != address(0),
@@ -403,5 +408,14 @@ contract Project {
 
         materials[_materialId].proofUploadedByTheSupplier = true;
         materials[_materialId].documentId = _documentId;
+    }
+
+    function calculatesTotalCarbon(
+        uint16 _materialId
+    ) private view returns (uint32) {
+        uint32 value = materials[_materialId].quantity *
+            materials[_materialId].totalLcConstruction;
+        uint32 carbonValuePerSm = value / surfaceSquareMeter;
+        return carbonValuePerSm;
     }
 }
