@@ -14,14 +14,16 @@ contract Project {
     uint16 private documentIdCounter;
 
     //uint id;
-    string projectName;
-    string typeOfProject;
-    string addresseOfProject;
-    uint32 surfaceSquareMeter;
-    uint256 projectValue;
-    uint startDate;
-    uint endDate;
-    uint16 scoringCarbon;
+    struct ProjectDetails {
+        string projectName;
+        string typeOfProject;
+        string addresseOfProject;
+        uint32 surfaceSquareMeter;
+        uint256 projectValue;
+        uint startDate;
+        uint endDate;
+        uint16 scoringCarbon;
+    }
 
     // Structure to represent a project participant
     struct Worker {
@@ -61,6 +63,10 @@ contract Project {
         string unitUF;
         uint16 totalLcConstruction;
         bool approveByTheArchi;
+        DeliveryInfo delivery;
+    }
+
+    struct DeliveryInfo {
         bool proofUploadedByTheSupplier;
         uint16 documentId;
         uint16 quantity;
@@ -89,6 +95,8 @@ contract Project {
     Phase[] phases;
     Supplier[] public suppliers;
     Material[] public materials;
+    ProjectDetails public projectDetails;
+    DeliveryInfo[] public deliveryInfos;
 
     mapping(address => Supplier) public suppliersMap;
     mapping(uint32 => string) private _documentURIs;
@@ -112,7 +120,10 @@ contract Project {
     }
     /// @notice Modifier to restrict access to only the architect of the project
     modifier onlyWorker() {
-        require(verifyWorker(), "Caller is not a official worker");
+        require(
+            verifyWorker(),
+            "Caller is not a official worker, wait for owner's approval"
+        );
         _;
     }
 
@@ -140,13 +151,41 @@ contract Project {
         uint _startDate,
         uint _endDate
     ) public onlyArchi {
-        projectName = _projectName;
-        typeOfProject = _typeOfProject;
-        addresseOfProject = _addresseOfProject;
-        surfaceSquareMeter = _surfaceSquareMeter;
-        projectValue = _projectValue;
-        startDate = _startDate;
-        endDate = _endDate;
+        _setProjectDetails(
+            _projectName,
+            _typeOfProject,
+            _addresseOfProject,
+            _surfaceSquareMeter,
+            _projectValue,
+            _startDate,
+            _endDate
+        );
+    }
+
+    /// @notice Internal function to set the project details
+    /// @param _projectName The name of the project
+    /// @param _typeOfProject The type of the project
+    /// @param _addresseOfProject The address of the project
+    /// @param _surfaceSquareMeter The surface area of the project in square meters
+    /// @param _projectValue The monetary value of the project
+    /// @param _startDate The start date of the project
+    /// @param _endDate The end date of the project
+    function _setProjectDetails(
+        string memory _projectName,
+        string memory _typeOfProject,
+        string memory _addresseOfProject,
+        uint32 _surfaceSquareMeter,
+        uint256 _projectValue,
+        uint _startDate,
+        uint _endDate
+    ) internal {
+        projectDetails.projectName = _projectName;
+        projectDetails.typeOfProject = _typeOfProject;
+        projectDetails.addresseOfProject = _addresseOfProject;
+        projectDetails.surfaceSquareMeter = _surfaceSquareMeter;
+        projectDetails.projectValue = _projectValue;
+        projectDetails.startDate = _startDate;
+        projectDetails.endDate = _endDate;
     }
 
     function getProjectDetails()
@@ -163,13 +202,13 @@ contract Project {
         )
     {
         return (
-            projectName,
-            typeOfProject,
-            addresseOfProject,
-            surfaceSquareMeter,
-            projectValue,
-            startDate,
-            endDate
+            projectDetails.projectName,
+            projectDetails.typeOfProject,
+            projectDetails.addresseOfProject,
+            projectDetails.surfaceSquareMeter,
+            projectDetails.projectValue,
+            projectDetails.startDate,
+            projectDetails.endDate
         );
     }
 
@@ -225,12 +264,34 @@ contract Project {
         string memory _a,
         string memory _b,
         string memory _c,
-        string memory _d
+        string memory _d,
+        uint16 _quantity
     ) public {
-        uint lengthArray = materials.length;
+        _createMaterial(_a, _b, _c, _d, 0, _quantity);
+    }
+
+    /// @notice Internal function to create a new material for the project
+    /// @param _a The name of the material
+    /// @param _b The description of the material
+    /// @param _c The company brand of the material
+    /// @param _d The type of utilization for the material
+    function _createMaterial(
+        string memory _a,
+        string memory _b,
+        string memory _c,
+        string memory _d,
+        //bool _proofUploadedByTheSupplier,
+        uint16 _documentId,
+        uint16 _quantity
+    ) internal {
+        DeliveryInfo memory newDelivery = DeliveryInfo(
+            false,
+            _documentId,
+            _quantity
+        );
         materials.push(
             Material(
-                lengthArray,
+                materials.length,
                 _a,
                 _b,
                 _c,
@@ -241,9 +302,7 @@ contract Project {
                 _a,
                 10,
                 false,
-                false,
-                0,
-                0
+                newDelivery
             )
         );
         emit MaterialCreated(materials.length - 1, _a, _b);
@@ -273,6 +332,10 @@ contract Project {
         // Check if the phase and material exist
         require(_idPhase < phases.length, "this phase doesn't exist");
         require(_idMaterial < materials.length, "this material doesn't exist");
+        require(
+            materials[_idMaterial].delivery.proofUploadedByTheSupplier,
+            "the proof of delivery is not yet done"
+        );
         // Add the material ID to the phase's materialIndices array
         phases[_idPhase].materialIndices.push(_idMaterial);
         // Check the amount carbon of the material and add to the total of phase
@@ -406,16 +469,16 @@ contract Project {
             "Document does not exist"
         );
 
-        materials[_materialId].proofUploadedByTheSupplier = true;
-        materials[_materialId].documentId = _documentId;
+        materials[_materialId].delivery.proofUploadedByTheSupplier = true;
+        materials[_materialId].delivery.documentId = _documentId;
     }
 
     function calculatesTotalCarbon(
         uint16 _materialId
     ) private view returns (uint32) {
-        uint32 value = materials[_materialId].quantity *
+        uint32 value = materials[_materialId].delivery.quantity *
             materials[_materialId].totalLcConstruction;
-        uint32 carbonValuePerSm = value / surfaceSquareMeter;
+        uint32 carbonValuePerSm = value / projectDetails.surfaceSquareMeter;
         return carbonValuePerSm;
     }
 }

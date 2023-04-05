@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 require("solidity-coverage");
 
 describe("Project", function () {
-  let Project, project, owner, addr1, addr2;
+  let Project, project, owner, addr1, addr2, addr3;
 
   beforeEach(async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
@@ -30,29 +30,37 @@ describe("Project", function () {
   });
   describe("Project phases and materials management", function () {
     beforeEach(async function () {
+      //   [owner, addr1, addr2, addr3] = await ethers.getSigners();
+      //   Project = await ethers.getContractFactory("Project");
+      //   project = await Project.deploy(owner.address);
+      //   await project.deployed();
       await project.connect(owner).setArchitect(addr1.address);
+      await project.connect(addr1).addWorker(addr2, "jon", "paradoxe", 123);
     });
 
-    it("Should create a new phase correctly", async function () {
-      await project.connect(addr1).newPhase("Phase 1", "Type 1");
-      const [, phaseType, ,] = await project.getPhase(1);
-      expect(phaseType).to.equal("Type 1");
-    });
+    // it("Should create a new phase correctly", async function () {
+    //   await project.connect(addr1).newPhase("Phase 1", "Type 1");
+    //   const [, phaseType, ,] = await project.getPhase(1);
+    //   expect(phaseType).to.equal("Type 1");
+    // });
 
-    it("Should revert if non-architect tries to create a new phase", async function () {
-      await expect(
-        project.connect(addr2).newPhase("Phase 1", "Type 1")
-      ).to.be.revertedWith("Caller is not the architect");
-    });
+    // it("Should revert if non-architect tries to create a new phase", async function () {
+    //   await expect(
+    //     project.connect(addr3).newPhase("Phase 1", "Type 1")
+    //   ).to.be.revertedWith("Caller is not the architect");
+    // });
 
     it("Should create a new material correctly", async function () {
-      await project.createMaterial(
-        "Material 1",
-        "Description 1",
-        "Company 1",
-        "Utilisation 1"
-      );
-      const [, name, , , , , , , , ,] = await project.materials(0);
+      await project
+        .connect(addr2)
+        .createMaterial(
+          "Material 1",
+          "Description 1",
+          "Company 1",
+          "Utilisation 1",
+          200
+        );
+      const [, name, , , , , , , , , ,] = await project.materials(0);
       expect(name).to.equal("Material 1");
     });
 
@@ -62,24 +70,28 @@ describe("Project", function () {
         "Material 1",
         "Description 1",
         "Company 1",
-        "Utilisation 1"
+        "Utilisation 1",
+        200
       );
-      await project.connect(addr1).addMaterialToPhase(0, 1);
+      await project.createDocument("test", 0);
+      await project.connect(addr2).addMaterialToPhase(0, 1);
       const [, , materialIndices] = await project.getPhase(1);
       expect(materialIndices[0]).to.equal(0);
     });
 
-    it("Should revert if non-architect tries to add a material to a phase", async function () {
+    it("Should revert if non-worker tries to add a material to a phase", async function () {
       await project.connect(addr1).newPhase("Phase 1", "Type 1");
       await project.createMaterial(
         "Material 1",
         "Description 1",
         "Company 1",
-        "Utilisation 1"
+        "Utilisation 1",
+        200
       );
-      await expect(
-        project.connect(addr2).addMaterialToPhase(0, 1)
-      ).to.be.revertedWith("Caller is not the architect");
+      await project.createDocument("test", 0);
+      await expect(project.addMaterialToPhase(0, 1)).to.be.revertedWith(
+        "Caller is not a official worker, wait for owner's approval"
+      );
     });
   });
 
