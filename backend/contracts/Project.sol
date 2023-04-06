@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
@@ -10,8 +10,10 @@ import "hardhat/console.sol";
 contract Project {
     address public owner;
     address public architect;
-    uint public numberOfPhases;
+    uint16 public numberOfPhases;
     uint16 private documentIdCounter;
+    bool public closed = false;
+    uint16 public constant CARBON_TRESHOLD_2022 = 640;
 
     //uint id;
     struct ProjectDetails {
@@ -22,7 +24,7 @@ contract Project {
         uint256 projectValue;
         uint startDate;
         uint endDate;
-        uint16 scoringCarbon;
+        uint64 scoringCarbon;
     }
 
     // Structure to represent a project participant
@@ -40,7 +42,7 @@ contract Project {
         string phaseName;
         string phaseType;
         uint[] materialIndices;
-        uint carbonOfPhase;
+        uint64 carbonOfPhase;
     }
     // Structure to represent a supplier
     struct Supplier {
@@ -90,9 +92,14 @@ contract Project {
     );
     event WorkerAdded(address account, string companyName, uint siretNumber);
     event ApprovedByTheOwner(address account, string companyName);
+    event CloseProject(
+        string projectName,
+        string typeOfProject,
+        uint scoringCarbon
+    );
 
     Worker[] public workers;
-    Phase[] phases;
+    Phase[] public phases;
     Supplier[] public suppliers;
     Material[] public materials;
     ProjectDetails public projectDetails;
@@ -126,10 +133,18 @@ contract Project {
         );
         _;
     }
+    /// @notice Modifier to restrict access if the project is closed
+    modifier isClosed() {
+        require(
+            !closed,
+            "Caller is not a official worker, wait for owner's approval"
+        );
+        _;
+    }
 
     /// @notice Set the architect of the project
     /// @param _architect The address of the architect
-    function setArchitect(address _architect) public onlyOwner {
+    function setArchitect(address _architect) public onlyOwner isClosed {
         architect = _architect;
         emit ArchitectSeted(_architect);
     }
@@ -150,7 +165,7 @@ contract Project {
         uint256 _projectValue,
         uint _startDate,
         uint _endDate
-    ) public onlyArchi {
+    ) public onlyArchi isClosed {
         _setProjectDetails(
             _projectName,
             _typeOfProject,
@@ -218,7 +233,7 @@ contract Project {
     function newPhase(
         string memory _name,
         string memory _phaseType
-    ) public onlyArchi {
+    ) public onlyArchi isClosed {
         // If there are no phases, create a genesis phase
         if (phases.length == 0) {
             Phase memory phase;
@@ -266,7 +281,7 @@ contract Project {
         string memory _c,
         string memory _d,
         uint16 _quantity
-    ) public {
+    ) public isClosed {
         _createMaterial(_a, _b, _c, _d, 0, _quantity);
     }
 
@@ -328,7 +343,7 @@ contract Project {
     function addMaterialToPhase(
         uint16 _idMaterial,
         uint _idPhase
-    ) public onlyWorker {
+    ) public onlyWorker isClosed {
         // Check if the phase and material exist
         require(_idPhase < phases.length, "this phase doesn't exist");
         require(_idMaterial < materials.length, "this material doesn't exist");
@@ -355,7 +370,7 @@ contract Project {
         string memory _companyName,
         string memory _companyAddresse,
         uint _siretNumber
-    ) public onlyArchi {
+    ) public onlyArchi isClosed {
         Worker memory worker;
         worker.account = _account;
         worker.companyName = _companyName;
@@ -370,7 +385,7 @@ contract Project {
     ///@notice Approve a worker by the owner
     ///@param _id The ID of the worker to be approved
 
-    function approvedByTheOwner(uint8 _id) external onlyOwner {
+    function approvedByTheOwner(uint8 _id) external onlyOwner isClosed {
         require(!workers[_id].isApprovedByTheOwner, "Already approved by you");
         workers[_id].isApprovedByTheOwner = true;
         emit ApprovedByTheOwner(workers[_id].account, workers[_id].companyName);
@@ -409,7 +424,7 @@ contract Project {
         string memory _companyName,
         string memory _companyAddress,
         uint8 _siretNumber
-    ) public onlyWorker {
+    ) public onlyWorker isClosed {
         require(
             suppliersMap[_account].account == address(0),
             "Supplier already exists"
@@ -427,7 +442,7 @@ contract Project {
         string memory _companyName,
         string memory _companyAddress,
         uint8 _siretNumber
-    ) public onlyWorker {
+    ) public onlyWorker isClosed {
         Supplier storage supplier = suppliersMap[_account];
         supplier.companyName = _companyName;
         supplier.companyAddress = _companyAddress;
@@ -440,7 +455,7 @@ contract Project {
     function createDocument(
         string memory _documentURI,
         uint16 _materialId
-    ) public {
+    ) public isClosed {
         require(suppliersMap[msg.sender].account != address(0));
         _documentURIs[documentIdCounter] = _documentURI;
         linkDocumentToMaterial(_materialId, documentIdCounter);
@@ -480,5 +495,26 @@ contract Project {
             materials[_materialId].totalLcConstruction;
         uint32 carbonValuePerSm = value / projectDetails.surfaceSquareMeter;
         return carbonValuePerSm;
+    }
+
+    function closeProject() external onlyArchi isClosed {
+        require(
+            keccak256(bytes(phases[0].phaseName)) ==
+                keccak256(bytes("genesis")),
+            "no phase created"
+        );
+        require(phases[1].materialIndices.length != 0, "no material added");
+        uint64 temporaryCarbon;
+        for (uint16 i = 1; i <= numberOfPhases; i++) {
+            temporaryCarbon = phases[i].carbonOfPhase;
+        }
+        projectDetails.scoringCarbon = temporaryCarbon;
+        closed = true;
+
+        emit CloseProject(
+            projectDetails.projectName,
+            projectDetails.typeOfProject,
+            projectDetails.scoringCarbon
+        );
     }
 }
