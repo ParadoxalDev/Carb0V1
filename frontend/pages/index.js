@@ -3,10 +3,15 @@ import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import Header from "@/components/Header/Header";
 import Layout from "@/components/Layout/Layout";
+import Intro from "@/components/Intro/Index";
 
 const inter = Inter({ subsets: ["latin"] });
+import { useAccount } from "wagmi";
+import { Text } from "@chakra-ui/react";
 
 export default function Home() {
+  function App() {}
+  const { address, isConnecting, isDisconnected } = useAccount();
   return (
     <>
       <Head>
@@ -15,7 +20,9 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Layout />
+      <Layout>
+        <Intro />
+      </Layout>
     </>
   );
 }

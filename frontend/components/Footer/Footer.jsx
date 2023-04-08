@@ -1,4 +1,5 @@
 import { Flex, Link, Text } from "@chakra-ui/react";
+import NextLink from "next/link";
 
 const Footer = () => {
   return (
@@ -11,7 +12,9 @@ const Footer = () => {
     >
       <Text>
         &copy;{" "}
-        <Link href="https://github.com/ParadoxalDev">ParadoxalDev Github</Link>
+        <Link as={NextLink} href="https://github.com/ParadoxalDev">
+          ParadoxalDev Github
+        </Link>
       </Text>
     </Flex>
   );
