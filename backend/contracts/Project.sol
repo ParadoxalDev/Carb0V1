@@ -3,11 +3,12 @@ pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
 import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 //import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
 ///@title Project - A contract to manage construction project details
-contract Project {
+contract Project is Initializable {
     address public owner;
     address public architect;
     uint16 public numberOfPhases;
@@ -110,9 +111,16 @@ contract Project {
 
     /// @notice Constructor to set the owner of the project
     /// @param _owner The address of the project owner
-    constructor(address _owner) {
+    // constructor(address _owner) {
+    //     owner = _owner;
+    // }
+
+    // -------------------- INITIALIZER --------------------
+    function initialize(address _owner) public payable initializer {
         owner = _owner;
     }
+
+    // -------------------- INITIALIZER --------------------
 
     /// @notice Modifier to restrict access to only the owner of the project
     modifier onlyOwner() {

@@ -12,7 +12,7 @@ async function main() {
 
   await carb0.deployed();
 
-  console.log(carb0);
+  console.log(carb0.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
