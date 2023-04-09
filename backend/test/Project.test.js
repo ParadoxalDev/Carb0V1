@@ -44,9 +44,22 @@ describe("Project", function () {
     ).to.be.revertedWith("Caller is not the owner");
   });
 
+  it("Shoud add a worker if architect", async function () {
+    await project.connect(owner).setArchitect(addr1.address);
+    await project
+      .connect(addr1)
+      .addWorker(addr2.address, "jon", "paradoxe", 123);
+    expect(await project.connect(addr2).verifyWorker()).to.equal(true);
+  });
+  it("Shoud revert if not architect try to add worker", async function () {
+    await project.connect(owner).setArchitect(addr1.address);
+    await expect(
+      project.connect(addr3).addWorker(addr2.address, "jon", "paradoxe", 123)
+    ).to.be.revertedWith("Caller is not the architect");
+  });
+
   describe("Project phases and materials management", function () {
     beforeEach(async function () {
-      // Code commun pour les tests de gestion des phases et matériaux
       await project.connect(owner).setArchitect(addr1.address);
       await project
         .connect(addr1)
@@ -91,10 +104,7 @@ describe("Project", function () {
     });
 
     it("Should add a material to a phase correctly", async function () {
-      // Create a new phase
       await project.connect(addr1).newPhase("Phase 1", "Type 1");
-
-      // Create a material
       await project
         .connect(addr2)
         .createMaterial(
@@ -115,7 +125,7 @@ describe("Project", function () {
       expect(materialIndices[0]).to.equal(0);
     });
 
-    it("Should revert if non-worker tries to add a material to a phase", async function () {
+    it("Should revert if non offical-worker tries to add supplier", async function () {
       await project.connect(addr1).newPhase("Phase 1", "Type 1");
       await project.createMaterial(
         "Material 1",
@@ -124,13 +134,12 @@ describe("Project", function () {
         "Utilisation 1",
         200
       );
-      await project.connect(owner).approvedByTheOwner(0);
-      await project
-        .connect(addr2)
-        .createSupplier(supplier.address, "test", "bxl", 10);
-      await project.connect(supplier).createDocument("test", 0);
-      await project.createDocument("test", 0);
-      await expect(project.addMaterialToPhase(0, 1)).to.be.revertedWith(
+
+      await expect(
+        project
+          .connect(addr2)
+          .createSupplier(supplier.address, "test", "bxl", 10)
+      ).to.be.revertedWith(
         "Caller is not a official worker, wait for owner's approval"
       );
     });
@@ -152,9 +161,9 @@ describe("Project", function () {
       await project
         .connect(addr1)
         .setProjectDetails(
-          "My Project",
-          "Residential",
-          "123 Main St",
+          "test",
+          "maison",
+          "bxl",
           1000,
           1000000,
           1648873193,
@@ -169,13 +178,63 @@ describe("Project", function () {
         startDate,
         endDate,
       ] = await project.getProjectDetails();
-      expect(projectName).to.equal("My Project");
-      expect(typeOfProject).to.equal("Residential");
-      expect(addresseOfProject).to.equal("123 Main St");
+      expect(projectName).to.equal("test");
+      expect(typeOfProject).to.equal("maison");
+      expect(addresseOfProject).to.equal("bxl");
       expect(surfaceSquareMeter).to.equal(1000);
       expect(projectValue).to.equal(1000000);
       expect(startDate).to.equal(1648873193);
       expect(endDate).to.equal(1654227993);
+    });
+  });
+  describe("Project closing", function () {
+    beforeEach(async function () {
+      await project.connect(owner).setArchitect(addr1.address);
+      await project
+        .connect(addr1)
+        .setProjectDetails(
+          "Project 1",
+          "Residential",
+          "123 Main St",
+          1000,
+          1000000,
+          1648873193,
+          1654227993
+        );
+      await project
+        .connect(addr1)
+        .addWorker(addr2.address, "jon", "paradoxe", 123);
+    });
+    it("Shoud not closing the project if no phase was create", async function () {
+      await expect(project.connect(addr1).closeProject()).to.be.revertedWith(
+        "no phase created"
+      );
+    });
+    it("Shoud not closing the project if no material was added", async function () {
+      await project.connect(addr1).newPhase("Phase 1", "Construction");
+      await expect(project.connect(addr1).closeProject()).to.be.revertedWith(
+        "no material added"
+      );
+    });
+    it("Shoud closing the project", async function () {
+      await project.connect(addr1).newPhase("Phase 1", "Type 1");
+      await project
+        .connect(addr2)
+        .createMaterial(
+          "Material 1",
+          "Description 1",
+          "Company 1",
+          "Utilisation 1",
+          200
+        );
+
+      await project.connect(owner).approvedByTheOwner(0);
+      await project
+        .connect(addr2)
+        .createSupplier(supplier.address, "test", "bxl", 10);
+      await project.connect(supplier).createDocument("test", 0);
+      await project.connect(addr2).addMaterialToPhase(0, 1);
+      await expect(project.connect(addr1).closeProject());
     });
   });
 });

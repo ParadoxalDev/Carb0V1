@@ -9,6 +9,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 ///@title Carb0 - A contract to create and manage worksite projects for track the c02
+///@author Macarez Jonathan  https://github.com/ParadoxalDev
 
 contract Carb0 {
     AggregatorV3Interface internal priceFeed;

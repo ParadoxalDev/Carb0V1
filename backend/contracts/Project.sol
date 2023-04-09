@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-// Uncomment this line to use console.log
 import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-//import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
-
-///@title Project - A contract to manage construction project details
+///@title Project - A contract to manage carbon in construction project
+///@author Macarez Jonathan  https://github.com/ParadoxalDev
 contract Project is Initializable {
     address public owner;
     address public architect;
@@ -16,7 +14,6 @@ contract Project is Initializable {
     bool public closed = false;
     uint16 public constant CARBON_TRESHOLD_2022 = 640;
 
-    //uint id;
     struct ProjectDetails {
         string projectName;
         string typeOfProject;
@@ -109,11 +106,8 @@ contract Project is Initializable {
     mapping(address => Supplier) public suppliersMap;
     mapping(uint32 => string) private _documentURIs;
 
-    /// @notice Constructor to set the owner of the project
+    /// @notice Constructor = Initializer in upgradable contract to set the owner of the project
     /// @param _owner The address of the project owner
-    // constructor(address _owner) {
-    //     owner = _owner;
-    // }
 
     // -------------------- INITIALIZER --------------------
     function initialize(address _owner) public payable initializer {
@@ -137,6 +131,10 @@ contract Project is Initializable {
     modifier onlyWorker() {
         require(
             verifyWorker(),
+            "Caller is not a official worker, wait for owner's approval"
+        );
+        require(
+            verifyApprovedByTheOwner(),
             "Caller is not a official worker, wait for owner's approval"
         );
         _;
@@ -445,6 +443,10 @@ contract Project is Initializable {
         });
     }
 
+    ///@notice update a supplier
+    ///@param _account The Ethereum address of the worker
+    ///@param _companyName The name of the worker's company
+    ///@param _companyAddress The address of the worker's company
     function updateSupplier(
         address _account,
         string memory _companyName,
@@ -478,6 +480,9 @@ contract Project is Initializable {
         return _documentURIs[_documentId];
     }
 
+    ///@notice link the document upload to a material
+    ///@param _materialId the id of the material
+    ///@param _documentId the id of the document
     function linkDocumentToMaterial(
         uint16 _materialId,
         uint16 _documentId
@@ -496,6 +501,9 @@ contract Project is Initializable {
         materials[_materialId].delivery.documentId = _documentId;
     }
 
+    ///@notice the function to calculate carbon per m2
+    ///@param _materialId the id of the material
+    ///@return carbonValuePerSm the value of carbon of this material in phases worksite
     function calculatesTotalCarbon(
         uint16 _materialId
     ) private view returns (uint32) {
@@ -505,12 +513,12 @@ contract Project is Initializable {
         return carbonValuePerSm;
     }
 
+    ///@notice Close the project, calculate the final carbon score, and emit a CloseProject event.
+    ///@dev This function can only be called by the architect and when the project is not already closed.
+
     function closeProject() external onlyArchi isClosed {
-        require(
-            keccak256(bytes(phases[0].phaseName)) ==
-                keccak256(bytes("genesis")),
-            "no phase created"
-        );
+        require(phases.length > 0, "no phase created");
+
         require(phases[1].materialIndices.length != 0, "no material added");
         uint64 temporaryCarbon;
         for (uint16 i = 1; i <= numberOfPhases; i++) {
