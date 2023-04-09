@@ -40,7 +40,7 @@ describe("Carb0", function () {
     it("Should create a new project correctly", async function () {
       const tx = await carb0
         .connect(owner)
-        .createProject({ value: ethers.utils.parseEther("0.1") });
+        .createProject({ value: ethers.utils.parseEther("0.01") });
 
       const txReceipt = await tx.wait();
       const projectCreatedEvent = txReceipt.events.find(
@@ -63,7 +63,7 @@ describe("Carb0", function () {
       await expectRevert.unspecified(
         carb0
           .connect(owner)
-          .createProject({ value: ethers.utils.parseEther("0.05") }),
+          .createProject({ value: ethers.utils.parseEther("0.0001") }),
         "Not enough ETH sent"
       );
     });
@@ -79,7 +79,7 @@ describe("Carb0", function () {
       const gasCost = txReceipt.gasUsed.mul(tx.gasPrice);
 
       expect(finalBalance).to.equal(
-        initialBalance.sub(ethers.utils.parseEther("0.1")).sub(gasCost)
+        initialBalance.sub(ethers.utils.parseEther("0.01")).sub(gasCost)
       );
     });
   });
@@ -108,5 +108,42 @@ describe("Carb0", function () {
       const projectIds = await carb0.connect(addr2).idOfMyProjects();
       expect(projectIds.length).to.equal(0);
     });
+  });
+
+  describe("Project upgrade", function () {
+    let newImplementation;
+
+    beforeEach(async function () {
+      await carb0
+        .connect(owner)
+        .createProject({ value: ethers.utils.parseEther("0.01") });
+      newImplementation = await Project.deploy();
+      await newImplementation.deployed();
+    });
+
+    // it("Should upgrade the project", async function () {
+    //   const projectProxy = await carb0.projectsArray(0);
+
+    //   await carb0.connect(owner).upgradeProject(0, newImplementation.address);
+    //   const upgradedProject = await ethers.getContractAt(
+    //     "Project",
+    //     projectProxy
+    //   );
+    //   expect(await upgradedProject.owner()).to.equal(owner.address);
+    // });
+
+    it("Should revert if project index is invalid", async function () {
+      await expectRevert(
+        carb0.connect(owner).upgradeProject(100, newImplementation.address),
+        "Invalid project index"
+      );
+    });
+
+    // it("Should revert if not called by the admin", async function () {
+    //   await expectRevert(
+    //     carb0.connect(addr1).upgradeProject(0, newImplementation.address),
+    //     "Only admin can upgrade"
+    //   );
+    // });
   });
 });

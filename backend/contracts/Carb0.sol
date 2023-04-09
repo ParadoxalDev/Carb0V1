@@ -50,23 +50,23 @@ contract Carb0 {
     // -------------------- CONSTRUCTOR --------------------
     // -------------------- CHAINLINK PRICE FEED ETH/USD SEPOLIA  --------------------
 
-    function getLatestPrice() public view returns (int) {
-        (
-            ,
-            /* uint80 roundID */ int price /*uint startedAt*/ /*uint timeStamp*/ /*uint80 answeredInRound*/,
-            ,
-            ,
+    // function getLatestPrice() public view returns (int) {
+    //     (
+    //         ,
+    //         /* uint80 roundID */ int price /*uint startedAt*/ /*uint timeStamp*/ /*uint80 answeredInRound*/,
+    //         ,
+    //         ,
 
-        ) = priceFeed.latestRoundData();
+    //     ) = priceFeed.latestRoundData();
 
-        return price;
-    }
+    //     return price;
+    // }
 
     // -------------------- TEST 2 ------------------------
-    function getEthUsdPrice() public view returns (uint256) {
-        (, int256 price, , , ) = priceFeed.latestRoundData();
-        return uint256(price);
-    }
+    // function getEthUsdPrice() public view returns (uint256) {
+    //     (, int256 price, , , ) = priceFeed.latestRoundData();
+    //     return uint256(price);
+    // }
 
     // -------------------- CHAINLINK PRICE FEED ETH/USD SEPOLIA  --------------------
 
