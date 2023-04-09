@@ -1,7 +1,9 @@
 import { Flex, Link, Text } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 const Header = () => {
+  const { isConnected } = useAccount();
   return (
     <Flex
       justifyContent="space-between"
@@ -18,9 +20,13 @@ const Header = () => {
         <Text>
           <Link href="/Projects">Les projets réalisés</Link>
         </Text>
-        <Text>
-          <Link href="/MyProject">Mes projets</Link>
-        </Text>
+        {isConnected ? (
+          <Text>
+            <Link href="/MyProject">Mes projets</Link>
+          </Text>
+        ) : (
+          ""
+        )}
       </Flex>
       <ConnectButton
         label="Connectez votre Wallet"

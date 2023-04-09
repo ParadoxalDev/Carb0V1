@@ -11,7 +11,6 @@ const Layout = ({ children }) => {
         direction={"column"}
         height="100vh"
       >
-        {" "}
         <Header />
         {children}
         <Footer />

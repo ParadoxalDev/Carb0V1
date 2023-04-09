@@ -15,9 +15,12 @@ const Intro = () => {
         <WhatIsCarb0 />
         <WhyCarb0 />
       </Flex>
-      <Flex justifyContent={"center"} marginTop="3rem" alignItems={"center"}>
-        <CreateNewProject />
-      </Flex>
+      <Flex
+        justifyContent={"center"}
+        marginTop="3rem"
+        alignItems={"center"}
+      ></Flex>
+      <CreateNewProject />
     </Box>
   );
 };

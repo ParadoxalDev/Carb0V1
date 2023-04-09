@@ -27,9 +27,10 @@ contract Carb0 {
 
     // Array to store project owners
     ProjectOwner[] public projectOwners;
+    mapping(address => uint) public projectid;
 
     // Constant to represent the cost of creating a new project
-    uint public constant PROJECT_CREATION_COST = 10 * 10 ** 18; // 10 USD
+    uint public constant PROJECT_CREATION_COST = 0.01 ether; //
 
     // Event to be emitted when a new project is created
     event ProjectCreated(address projectAddress, address owner, uint id);
@@ -75,11 +76,8 @@ contract Carb0 {
         // Verify that enough ETH was sent
         //int EthUsdfedFromChainlink = getLatestPrice();
         //  uint EthUsd = uint(EthUsdfedFromChainlink / 100000000);
-        uint price = getEthUsdPrice();
-        require(
-            msg.value >= (PROJECT_CREATION_COST / price),
-            "Not enough ETH sent"
-        );
+        // uint price = getEthUsdPrice();
+        require(msg.value >= PROJECT_CREATION_COST, "Not enough ETH sent");
 
         TransparentUpgradeableProxy projectProxy = new TransparentUpgradeableProxy(
             projectImplementation,
@@ -100,6 +98,8 @@ contract Carb0 {
             msg.sender,
             numberOfProjects
         );
+
+        projectid[msg.sender] = numberOfProjects;
 
         // If the sender sent more than PROJECT_CREATION_COST, refund the excess
         if (msg.value > PROJECT_CREATION_COST) {
