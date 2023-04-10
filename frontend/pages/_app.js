@@ -3,12 +3,12 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { ChakraProvider } from "@chakra-ui/react";
 import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { configureChains, createClient, WagmiConfig } from "wagmi";
-import { hardhat } from "wagmi/chains";
+import { hardhat, polygonMumbai } from "wagmi/chains";
 //import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 
 const { chains, provider } = configureChains(
-  [hardhat],
+  [polygonMumbai],
   [
     //[alchemyProvider({ apiKey: process.env.ALCHEMY_ID }),
     publicProvider(),

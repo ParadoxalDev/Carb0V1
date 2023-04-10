@@ -16,7 +16,7 @@ export default function Header() {
       </Box>
 
       <Flex justifyContent="space-between" width={"60%"}>
-        <NextLink href="/home" passHref>
+        <NextLink href="/" passHref>
           <Link px="4" color="white">
             Home
           </Link>
@@ -26,7 +26,7 @@ export default function Header() {
             Projets réalisé
           </Link>
         </NextLink>
-        <NextLink href="/mes-projets" passHref>
+        <NextLink href="/MyProject" passHref>
           <Link px="4" color="white">
             Mes projets
           </Link>

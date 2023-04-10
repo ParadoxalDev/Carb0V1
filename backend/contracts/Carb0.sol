@@ -82,7 +82,7 @@ contract Carb0 {
 
         TransparentUpgradeableProxy projectProxy = new TransparentUpgradeableProxy(
             projectImplementation,
-            0xFeD86fDF751B3896Bcf3768B3A29aBFa6Ce9b1cB, // The admin who can upgrade the proxy - possible improvement: Gnosis Safe Wallet managed by the team
+            0xB620bbbBd9c2a8714A6F656135213FD0F3123297, // The admin who can upgrade the proxy - possible improvement: Gnosis Safe Wallet managed by the team
             abi.encodeWithSignature("initialize(address)", msg.sender) // project's initializer -> Project's owner address
         );
 

@@ -1,6 +1,6 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 
-const WhatIsCarb0 = () => {
+const WhatIsCarb0 = ({ projectAddress }) => {
   return (
     <Flex width={"100%"}>
       <Text marginTop="1rem" fontSize={"3xl"}>
@@ -11,7 +11,7 @@ const WhatIsCarb0 = () => {
           <Text>TEST</Text>
           <Text>TEST</Text>
           <Text>TEST</Text>
-          <Text>TEST</Text>
+          <Text>TEST {projectAddress}</Text>
         </Flex>
       </Box>
     </Flex>

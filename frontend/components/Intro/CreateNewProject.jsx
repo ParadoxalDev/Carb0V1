@@ -4,7 +4,6 @@ import { BigNumber, ethers, Signer } from "ethers";
 import { abi, contractAddress } from "@/public/constants";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { parseEther } from "ethers/lib/utils.js";
 
 const CreateNewProject = () => {
   const { isConnected, address } = useAccount();
@@ -15,6 +14,9 @@ const CreateNewProject = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionData, setTransactionData] = useState(null);
   const router = useRouter();
+  const [projectAddress, setProjectAddress] = useState("");
+  const [projectId, setProjectId] = useState(0);
+  const [owner, setOwner] = useState("");
 
   const createProject = async () => {
     if (!isConnected) {
@@ -32,6 +34,10 @@ const CreateNewProject = () => {
     try {
       const transaction = await contract.createProject({ value: valueToSend });
       await transaction.wait();
+      contract.once("ProjectCreated", (projectAddress, owner, id) => {
+        setProjectAddress(projectAddress);
+        setProjectId(id.toNumber());
+      });
 
       setIsSuccess(true);
       router.replace("/MyProject");

@@ -26,9 +26,17 @@ require("dotenv").config();
         url: process.env.ALCHEMY_API_KEY,
         accounts: [process.env.SEPOLIA_PRIVATE_KEY],
       },
+      mumbai: {
+        url: process.env.ALCHEMY_MUMBAI_API_KEY,
+        accounts: [process.env.MUMBAI_KEY],
+        chainId: 80001,
+      },
     },
     etherscan: {
-      apiKey: process.env.ETHERSCAN_API_KEY,
+      apiKey: process.env.POLYGONSCAN_API_KEY,
+      // apiKey: process.env.ETHERSCAN_API_KEY,
     },
+    // polygonscan: {
+    // },
   }
 );
