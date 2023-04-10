@@ -1,7 +1,6 @@
 import Layout from "@/components/Layout/Layout";
 import { abi, contractAddress } from "@/public/constants";
 import { Text } from "@chakra-ui/react";
-import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useAccount, useContractRead, useProvider } from "wagmi";
@@ -12,25 +11,26 @@ const MyProject = () => {
   const route = useRouter();
   const [ids, setIds] = useState([""]);
 
-  const myproject = async () => {
-    const contract = new ethers.Contract(contractAddress, abi, provider);
-    const tx = await contract.connect(provider).idOfMyProjects();
-    console.log(tx);
-    setIds(tx.toString());
-  };
+  const { data, isError, isLoading } = useContractRead({
+    address: contractAddress,
+    abi: abi,
+    functionName: "idOfMyProjects",
+  });
 
   useEffect(() => {
     if (isConnected) {
-      myproject();
+      if (data) {
+        const prov = [];
+        for (let i = 0; i < data.length; i++) {
+          prov.push("  Projet ", i, " :", data[i]._hex);
+          console.log(data[2]);
+        }
+        setIds(prov);
+      }
     } else {
       route.replace("/");
     }
-  }, [isConnected, route, provider]);
-  //   useEffect(() => {
-  //     if (!isConnected) {
-  //       route.replace("/");
-  //     }
-  //   }, [isConnected, route]);
+  }, [isConnected, route, data]);
 
   return (
     <>

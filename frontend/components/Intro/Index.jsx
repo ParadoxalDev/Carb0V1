@@ -1,7 +1,6 @@
 import { Box, Container, Flex, Heading, Text } from "@chakra-ui/react";
 import CreateNewProject from "./CreateNewProject";
 import WhatIsCarb0 from "./WhatIsCarb0";
-import WhyCarb0 from "./WhyCarb0";
 
 const Intro = () => {
   return (
@@ -13,7 +12,6 @@ const Intro = () => {
           </Heading>
         </Box>
         <WhatIsCarb0 />
-        <WhyCarb0 />
       </Flex>
       <Flex
         justifyContent={"center"}

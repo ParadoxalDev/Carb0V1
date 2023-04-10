@@ -1,40 +1,41 @@
-import { Flex, Link, Text } from "@chakra-ui/react";
+import { Flex, Box, Link, Spacer, Text } from "@chakra-ui/react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import NextLink from "next/link";
 
-const Header = () => {
-  const { isConnected } = useAccount();
+export default function Header() {
   return (
     <Flex
+      as="header"
+      p="4"
+      bg="teal.500"
+      width={"100%"}
       justifyContent="space-between"
-      alignItems="center"
-      height={"10vh"}
-      width="100%"
-      p={"2rem"}
     >
-      <Text fontWeight={"bold"}>NOTRE LOGO</Text>
-      <Flex width={"40%"} justifyContent="space-between" alignItems={"center"}>
-        <Text>
-          <Link href="/">Home</Link>
-        </Text>
-        <Text>
-          <Link href="/Projects">Les projets réalisés</Link>
-        </Text>
-        {isConnected ? (
-          <Text>
-            <Link href="/MyProject">Mes projets</Link>
-          </Text>
-        ) : (
-          ""
-        )}
+      <Box>
+        <Text>Mon Logo</Text>
+      </Box>
+
+      <Flex justifyContent="space-between" width={"60%"}>
+        <NextLink href="/home" passHref>
+          <Link px="4" color="white">
+            Home
+          </Link>
+        </NextLink>
+        <NextLink href="/projets-realise" passHref>
+          <Link px="4" color="white">
+            Projets réalisé
+          </Link>
+        </NextLink>
+        <NextLink href="/mes-projets" passHref>
+          <Link px="4" color="white">
+            Mes projets
+          </Link>
+        </NextLink>
       </Flex>
-      <ConnectButton
-        label="Connectez votre Wallet"
-        chainStatus="full"
-        showBalance={false}
-      />
+
+      <Box>
+        <ConnectButton />
+      </Box>
     </Flex>
   );
-};
-
-export default Header;
+}
